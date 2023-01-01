@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Image,
   ScrollView,
+  FlatList,
   ToastAndroid,
   TouchableOpacity,
 } from 'react-native';
@@ -30,10 +31,9 @@ const ViewAllUsers = ({navigation, route}) => {
   }, []);
 
   const fetchMoreData = () => {
-    setPage(page + 1);
-    if (page <= totalPages) {
+    if (page + 1 <= totalPages) {
       setLoading(true);
-      fetch(`https://reqres.in/api/users?page=${page}`, {
+      fetch(`https://reqres.in/api/users?page=${page + 1}`, {
         method: 'GET',
       })
         .then(response => response.json())
@@ -41,7 +41,10 @@ const ViewAllUsers = ({navigation, route}) => {
           setData(data.concat(json.data));
         })
         .catch(error => console.error(error))
-        .finally(() => setLoading(false));
+        .finally(() => {
+          setLoading(false);
+          setPage(page + 1);
+        });
     }
   };
 
@@ -76,7 +79,7 @@ const ViewAllUsers = ({navigation, route}) => {
   return (
     <SafeAreaView>
       <View>
-        <ScrollView
+        {/* <ScrollView
           onScroll={({nativeEvent}) => {
             if (isCloseToBottom(nativeEvent)) {
               fetchMoreData();
@@ -117,7 +120,44 @@ const ViewAllUsers = ({navigation, route}) => {
               </View>
             );
           })}
-        </ScrollView>
+        </ScrollView> */}
+        <FlatList
+          data={data}
+          renderItem={({item}) => (
+            <View key={Math.random()} style={styles.cardContainer}>
+              <View style={styles.textContainer}>
+                <Text style={styles.normalFont}>
+                  {item.first_name} {item.last_name}
+                </Text>
+                <Text style={styles.smallFont}>{item.email}</Text>
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => {
+                      navigation.push('EditUserDetailsScreen', item);
+                    }}>
+                    <Text>Edit</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={deleteUser}>
+                    <Text>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={styles.avatarContainer}>
+                <Image
+                  style={styles.avatar}
+                  source={{
+                    uri: item.avatar,
+                  }}
+                />
+              </View>
+            </View>
+          )}
+          onEndReached={fetchMoreData}
+          onEndReachedThreshold={0}
+        />
         {loading ? <Text style={styles.largeFont}>Loading...</Text> : null}
       </View>
     </SafeAreaView>
